@@ -67,6 +67,24 @@ Install as an Arch package (shows up in the app launcher):
 makepkg -si
 ```
 
+### Prebuilt binary (any Linux with glibc)
+
+Download `rust-openconnect-gui-linux-amd64.tar.gz` from
+[Releases](https://github.com/Coder-Mehedi/rust-openconnect-gui/releases), then:
+
+```sh
+tar xzf rust-openconnect-gui-linux-amd64.tar.gz
+sudo install -Dm755 rust-openconnect-gui /usr/local/bin/rust-openconnect-gui
+```
+
+### Arch Linux (AUR)
+
+Once published on the AUR:
+
+```sh
+yay -S rust-openconnect-gui   # or paru -S rust-openconnect-gui
+```
+
 ## First connection
 
 1. Fill in Server, Username, Password; tick *Save password in keyring*
