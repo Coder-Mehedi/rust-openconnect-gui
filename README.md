@@ -22,10 +22,11 @@ GUI (your user) ── spawns & monitors ──▶ sudo -n openconnect … (root
 - **Saved password** in the freedesktop Secret Service (`gnome-keyring`),
   encrypted at rest, unlocked at login — stored via the `keyring` crate,
   sent to openconnect over stdin, never on the command line.
-- **Certificate pinning**: the first connection asks you to accept the
-  server's certificate; accepting captures the fingerprint openconnect prints
-  (`--servercert …`), saves it to the config, and future connections are
-  fully unattended.
+- **Certificate pinning**: on the first connection the server's certificate
+  is accepted automatically and its fingerprint pinned (trust-on-first-use,
+  like SSH); every later connection is fully unattended. If the server's
+  certificate legitimately changes, delete the `servercert` line from
+  `~/.config/rust-openconnect-gui/config.toml`.
 - **Auto-connect at launch** — zero-touch VPN on login.
 - **Survives GUI exit**: openconnect writes to a log file (not a pipe), so
   closing the app does **not** drop the VPN; reopening the GUI re-attaches
@@ -46,10 +47,11 @@ echo "$USER ALL=(root) NOPASSWD: /usr/bin/openconnect *, /usr/bin/pkill -INT -x 
 sudo visudo -cf /etc/sudoers.d/openconnect-gui   # must say: parsed OK
 ```
 
-(The app's **Setup** panel shows the same line with a copy button. On a
-single-user machine this grants nothing your sudo password doesn't already
-grant; to tighten it, replace `*` with the exact arguments your connection
-uses.)
+(The app shows a **Setup** panel with the same line and a copy button —
+but only when the rule is missing; on a configured machine it stays out
+of the way. On a single-user machine this grants nothing your sudo
+password doesn't already grant; to tighten it, replace `*` with the
+exact arguments your connection uses.)
 
 Everything else works out of the box on a system with `openconnect`, `sudo`
 and a running Secret Service (`gnome-keyring-daemon --components=secrets`).
@@ -105,9 +107,9 @@ yay -S rust-openconnect-gui   # or paru -S rust-openconnect-gui
 
 1. Fill in Server, Username, Password; tick *Save password in keyring*
    (and *Auto-connect at launch* if you want zero-touch starts).
-2. Click **Connect**.
-3. When the certificate banner appears, click **Accept & save** — done
-   forever.
+2. Click **Connect**. The server's certificate is accepted and pinned
+   automatically on this first connection; from then on connecting is a
+   single click (or zero, with auto-connect).
 
 ## Files
 
@@ -126,3 +128,6 @@ yay -S rust-openconnect-gui   # or paru -S rust-openconnect-gui
   single-user desktop; you already have full sudo.
 - The log file contains everything openconnect prints, which never includes
   the password (it is read from stdin).
+- Certificate trust is automatic on first contact (TOFU). The fingerprint is
+  pinned and any later mismatch fails the connection — a legitimate server
+  certificate change means removing the `servercert` line from the config.

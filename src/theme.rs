@@ -31,9 +31,6 @@ pub const BLUE: Color32 = Color32::from_rgb(0x89, 0xb4, 0xfa);
 pub const SAPPHIRE: Color32 = Color32::from_rgb(0x74, 0xc7, 0xec);
 pub const PEACH: Color32 = Color32::from_rgb(0xfa, 0xb3, 0x87);
 
-/// Yellow tinted over mantle — background for the certificate warning banner.
-pub const YELLOW_DIM: Color32 = Color32::from_rgb(0x33, 0x30, 0x36);
-
 /// Blue blended over base — selection background.
 pub const SELECTION: Color32 = Color32::from_rgb(0x39, 0x44, 0x61);
 

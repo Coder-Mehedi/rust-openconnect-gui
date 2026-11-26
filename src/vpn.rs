@@ -55,8 +55,6 @@ pub enum Cmd {
 pub enum Event {
     Status(Status),
     Log(String),
-    /// openconnect is asking whether to trust the server certificate.
-    CertPrompt,
     /// A `--servercert <fingerprint>` value was found in the output — pin it.
     CertPinned(String),
     Note(String),
@@ -82,6 +80,7 @@ pub fn spawn(ctx: egui::Context, events: Sender<Event>) -> Sender<Cmd> {
                 tail_buf: Vec::new(),
                 log_path,
                 status: Status::Disconnected,
+                cert_answered: false,
                 last_adopt_check: Instant::now(),
             };
             m.adopt_existing();
@@ -113,6 +112,9 @@ struct Manager {
     tail_buf: Vec<u8>,
     log_path: PathBuf,
     status: Status,
+    /// Whether we already auto-accepted the certificate question on this
+    /// connection — prevents a stray second `yes` answering a later prompt.
+    cert_answered: bool,
     last_adopt_check: Instant,
 }
 
@@ -155,6 +157,7 @@ impl Manager {
             self.emit(Event::Note("no server configured".into()));
             return;
         }
+        self.cert_answered = false;
 
         // Rotate an oversized log, then remember where this session starts.
         if fs::metadata(&self.log_path).map(|m| m.len() > LOG_ROTATE_BYTES).unwrap_or(false) {
@@ -319,6 +322,16 @@ impl Manager {
                 self.handle_line(line);
             }
         }
+        // The certificate question arrives WITHOUT a trailing newline while
+        // openconnect blocks waiting for the answer — flush and handle the
+        // partial line so we can auto-accept it instead of hanging.
+        if !self.tail_buf.is_empty() {
+            let pending = String::from_utf8_lossy(&self.tail_buf).trim().to_string();
+            if !pending.is_empty() && is_cert_question(&pending) && !self.cert_answered {
+                self.tail_buf.clear();
+                self.handle_line(pending);
+            }
+        }
     }
 
     fn handle_line(&mut self, line: String) {
@@ -330,8 +343,16 @@ impl Manager {
                 "sudo needs a password — the sudoers rule from Setup is missing or not applied".into(),
             ));
         }
-        if is_cert_prompt(&line) {
-            self.emit(Event::CertPrompt);
+        // Trust on first use: automatically answer the server-certificate
+        // question the first time it appears; the fingerprint openconnect
+        // prints next gets pinned (CertPinned) so it never asks again.
+        if is_cert_question(&line) && !self.cert_answered && self.stdin.is_some() {
+            self.cert_answered = true;
+            if self.write_stdin("yes") {
+                self.emit(Event::Note(
+                    "server certificate not yet trusted — accepted; pinning fingerprint".into(),
+                ));
+            }
         }
         if let Some(fp) = extract_servercert(&line) {
             self.emit(Event::CertPinned(fp));
@@ -360,9 +381,9 @@ fn needs_sudoers_hint(line: &str) -> bool {
     line.contains("a password is required")
 }
 
-fn is_cert_prompt(line: &str) -> bool {
-    line.contains("failed verification")
-        || (line.contains("to accept") && line.contains("to abort"))
+/// The interactive certificate question openconnect prints on first contact.
+fn is_cert_question(line: &str) -> bool {
+    line.contains("to accept") && line.contains("to abort")
 }
 
 /// openconnect itself prints `--servercert <fingerprint>` after you accept a
@@ -398,14 +419,15 @@ mod tests {
     }
 
     #[test]
-    fn detects_cert_prompt() {
-        assert!(is_cert_prompt(
-            "Certificate from VPN server \"198.51.100.1\" failed verification."
-        ));
-        assert!(is_cert_prompt(
+    fn detects_cert_question() {
+        assert!(is_cert_question(
             "Enter 'yes' to accept, 'no' to abort; anything else to view: "
         ));
-        assert!(!is_cert_prompt("Established DTLS connection (using GnuTLS). Ciphersuite x."));
+        // The verification-failure notice alone is not the question itself.
+        assert!(!is_cert_question(
+            "Certificate from VPN server \"198.51.100.1\" failed verification."
+        ));
+        assert!(!is_cert_question("Established DTLS connection (using GnuTLS). Ciphersuite x."));
     }
 
     #[test]

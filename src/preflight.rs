@@ -2,7 +2,7 @@
 //! Preflight button in the GUI runs the same list.
 
 use std::path::Path;
-use std::process::Command;
+use std::process::{Command, Stdio};
 
 use crate::{config, secrets, vpn};
 
@@ -21,6 +21,19 @@ pub fn run_checks() -> Vec<Check> {
         check_profile(),
         check_config_dir(),
     ]
+}
+
+/// Is the NOPASSWD sudoers rule for openconnect in place? Decides whether
+/// the Setup card needs to be shown at all.
+pub fn sudoers_ok() -> bool {
+    Command::new(vpn::SUDO)
+        .args(["-n", vpn::OPENCONNECT, "--version"])
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status()
+        .map(|s| s.success())
+        .unwrap_or(false)
 }
 
 fn check_binaries() -> Check {

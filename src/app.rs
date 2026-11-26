@@ -19,12 +19,12 @@ pub struct App {
     status: Status,
     connected_at: Option<Instant>,
     log: Vec<String>,
-    cert_prompt: bool,
     response_input: String,
     cmd_tx: Sender<Cmd>,
     events: Receiver<Event>,
     checks: Option<Vec<preflight::Check>>,
-    open_setup: bool,
+    /// The sudoers Setup card is hidden unless the NOPASSWD rule is missing.
+    needs_setup: bool,
 }
 
 impl App {
@@ -51,12 +51,11 @@ impl App {
             status: Status::Disconnected,
             connected_at: None,
             log: Vec::new(),
-            cert_prompt: false,
             response_input: String::new(),
             cmd_tx,
             events,
             checks: None,
-            open_setup: false,
+            needs_setup: !preflight::sudoers_ok(),
         };
 
         // Zero-touch launch when everything needed is already saved.
@@ -93,7 +92,6 @@ impl App {
         if let Err(e) = config::save(&self.cfg) {
             self.push_note(&format!("could not save settings: {e}"));
         }
-        self.cert_prompt = false;
         let params = vpn::ConnectParams {
             server: self.cfg.server.clone(),
             username: self.cfg.username.clone(),
@@ -157,7 +155,6 @@ impl eframe::App for App {
                     self.log.push(line);
                     self.truncate_log();
                 }
-                Event::CertPrompt => self.cert_prompt = true,
                 Event::CertPinned(fp) => {
                     if self.cfg.servercert != fp {
                         self.cfg.servercert = fp;
@@ -166,11 +163,10 @@ impl eframe::App for App {
                             Err(e) => self.push_note(&format!("could not save pinned certificate: {e}")),
                         }
                     }
-                    self.cert_prompt = false;
                 }
                 Event::Note(n) => {
                     if n.contains("sudoers rule") {
-                        self.open_setup = true;
+                        self.needs_setup = true;
                     }
                     self.push_note(&n);
                 }
@@ -208,11 +204,6 @@ impl eframe::App for App {
                         self.status_card(ui, running);
                         ui.add_space(12.0);
 
-                        if self.cert_prompt && running {
-                            self.cert_banner(ui);
-                            ui.add_space(12.0);
-                        }
-
                         self.profile_card(ui, profile_ready);
                         ui.add_space(12.0);
 
@@ -221,8 +212,10 @@ impl eframe::App for App {
                             ui.add_space(12.0);
                         }
 
-                        self.setup_card(ui);
-                        ui.add_space(12.0);
+                        if self.needs_setup {
+                            self.setup_card(ui);
+                            ui.add_space(12.0);
+                        }
 
                         self.log_card(ui);
                     });
@@ -296,7 +289,6 @@ impl App {
                 if is_connect {
                     self.connect();
                 } else {
-                    self.cert_prompt = false;
                     let _ = self.cmd_tx.send(Cmd::Disconnect);
                 }
             }
@@ -332,35 +324,6 @@ impl App {
                 });
             }
         });
-    }
-
-    fn cert_banner(&mut self, ui: &mut egui::Ui) {
-        egui::Frame::NONE
-            .fill(theme::YELLOW_DIM)
-            .stroke(Stroke::new(1.0, theme::YELLOW))
-            .corner_radius(12.0)
-            .inner_margin(Margin::same(12))
-            .show(ui, |ui| {
-                ui.set_min_width(ui.available_width());
-                ui.horizontal_wrapped(|ui| {
-                    ui.label(RichText::new("The server's certificate isn't trusted yet. Accept it?").color(theme::YELLOW));
-                    if ui
-                        .add(
-                            egui::Button::new(RichText::new("Accept & save").small().strong().color(theme::CRUST))
-                                .fill(theme::YELLOW)
-                                .corner_radius(9.0),
-                        )
-                        .clicked()
-                    {
-                        let _ = self.cmd_tx.send(Cmd::Respond("yes".into()));
-                        self.cert_prompt = false;
-                    }
-                    if small_button(ui, "Reject") {
-                        let _ = self.cmd_tx.send(Cmd::Respond("no".into()));
-                        self.cert_prompt = false;
-                    }
-                });
-            });
     }
 
     fn profile_card(&mut self, ui: &mut egui::Ui, profile_ready: bool) {
@@ -432,7 +395,7 @@ impl App {
             egui::CollapsingHeader::new(
                 RichText::new("Setup · passwordless sudo   one-time").strong().color(theme::SUBTEXT1).small(),
             )
-            .default_open(self.open_setup)
+            .default_open(true)
                 .show(ui, |ui| {
                     ui.add_space(6.0);
                     ui.label(
