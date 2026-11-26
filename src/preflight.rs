@@ -1,7 +1,7 @@
 //! System checks: `rust-openconnect-gui --check` runs these headless, and the
 //! Preflight button in the GUI runs the same list.
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
 use crate::{config, secrets, vpn};
@@ -18,6 +18,7 @@ pub fn run_checks() -> Vec<Check> {
         check_binaries(),
         check_sudoers(),
         check_keyring(),
+        check_launcher_entry(),
         check_profile(),
         check_config_dir(),
     ]
@@ -101,6 +102,52 @@ fn check_keyring() -> Check {
         Ok(detail) => Check { name: "password keyring", ok: true, detail },
         Err(e) => Check { name: "password keyring", ok: false, detail: e },
     }
+}
+
+/// App launchers (KDE Kickoff, GNOME, wofi…) list .desktop entries, not
+/// binaries — a binary-only install is invisible to them.
+fn check_launcher_entry() -> Check {
+    match desktop_entry_path() {
+        Some(path) => Check { name: "launcher entry", ok: true, detail: path },
+        None => Check {
+            name: "launcher entry",
+            ok: false,
+            detail: "rust-openconnect-gui.desktop not found in any applications \
+                     directory — install the .desktop + icon from the release tarball \
+                     (README: Prebuilt binary); on KDE run kbuildsycoca6 afterwards"
+                .into(),
+        },
+    }
+}
+
+fn desktop_entry_path() -> Option<String> {
+    const FNAME: &str = "rust-openconnect-gui.desktop";
+    let mut dirs: Vec<PathBuf> = Vec::new();
+    match std::env::var_os("XDG_DATA_HOME") {
+        Some(home) => dirs.push(PathBuf::from(home).join("applications")),
+        None => {
+            if let Some(home) = std::env::var_os("HOME") {
+                dirs.push(PathBuf::from(home).join(".local/share/applications"));
+            }
+        }
+    }
+    match std::env::var("XDG_DATA_DIRS") {
+        Ok(xdd) => {
+            for d in xdd.split(':').filter(|s| !s.is_empty()) {
+                dirs.push(PathBuf::from(d).join("applications"));
+            }
+        }
+        Err(_) => {
+            // Spec default.
+            dirs.push(PathBuf::from("/usr/local/share/applications"));
+            dirs.push(PathBuf::from("/usr/share/applications"));
+        }
+    }
+    dirs.push(PathBuf::from("/usr/share/applications"));
+    dirs.into_iter()
+        .map(|d| d.join(FNAME))
+        .find(|p| p.is_file())
+        .map(|p| p.display().to_string())
 }
 
 fn check_profile() -> Check {

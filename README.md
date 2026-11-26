@@ -90,10 +90,18 @@ sudo install -Dm644 rust-openconnect-gui.desktop /usr/share/applications/rust-op
 sudo install -Dm644 rust-openconnect-gui.svg /usr/share/icons/hicolor/scalable/apps/rust-openconnect-gui.svg
 ```
 
+If the app doesn't show in the launcher after that: launchers list
+`.desktop` entries, not binaries, so the desktop file must be installed —
+and KDE caches the application list, so on Plasma run `kbuildsycoca6`
+afterwards (then search for “OpenConnect”). `rust-openconnect-gui
+--check` reports whether the desktop entry is in a location launchers
+read.
+
 On a fresh machine you also need the pieces the GUI drives:
 `sudo pacman -S openconnect`, a running Secret Service (gnome-keyring) for
 password saving, and the one-time sudoers rule from [Setup](#one-time-setup)
-below. `rust-openconnect-gui --check` reports which of these are missing.
+below. `rust-openconnect-gui --check` reports which of these are missing —
+including the desktop entry itself.
 
 ### Arch Linux (AUR)
 
