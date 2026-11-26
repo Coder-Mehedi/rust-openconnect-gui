@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=OpenConnect GUI
+GenericName=VPN Client
+Comment=Connect to AnyConnect VPNs through openconnect
+Exec=rust-openconnect-gui
+Icon=rust-openconnect-gui
+Terminal=false
+Categories=Network;
+Keywords=vpn;openconnect;anyconnect;cisco;network;tunnel;
+StartupWMClass=rust-openconnect-gui
