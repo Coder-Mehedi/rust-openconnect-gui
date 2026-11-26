@@ -2,6 +2,7 @@ mod app;
 mod config;
 mod preflight;
 mod secrets;
+mod theme;
 mod vpn;
 
 fn main() -> eframe::Result<()> {
@@ -20,7 +21,7 @@ fn main() -> eframe::Result<()> {
     let options = eframe::NativeOptions {
         viewport: eframe::egui::ViewportBuilder::default()
             .with_title("OpenConnect GUI")
-            .with_inner_size([560.0, 820.0]),
+            .with_inner_size([580.0, 900.0]),
         ..Default::default()
     };
 

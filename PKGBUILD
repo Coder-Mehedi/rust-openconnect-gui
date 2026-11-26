@@ -1,7 +1,7 @@
 # Local-development PKGBUILD: builds from the checkout it lives in.
 # Install with:  makepkg -si
 pkgname=rust-openconnect-gui
-pkgver=0.1.0
+pkgver=0.1.1
 pkgrel=1
 pkgdesc="Minimal Rust/egui GUI for openconnect VPN — saved passwords, unattended connects"
 arch=('x86_64')

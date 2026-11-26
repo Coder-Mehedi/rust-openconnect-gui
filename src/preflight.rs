@@ -6,6 +6,7 @@ use std::process::Command;
 
 use crate::{config, secrets, vpn};
 
+#[derive(Debug, Clone)]
 pub struct Check {
     pub name: &'static str,
     pub ok: bool,
