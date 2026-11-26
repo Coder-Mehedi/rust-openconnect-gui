@@ -1,0 +1,11 @@
+[package]
+name = "rust-openconnect-gui"
+version = "0.1.2"
+edition = "2024"
+
+[dependencies]
+dirs = "7.0.0"
+eframe = "0.37.0"
+keyring = "4.2.0"
+serde = { version = "1.0.229", features = ["derive"] }
+toml = "1.2.3"
