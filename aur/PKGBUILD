@@ -10,7 +10,7 @@ depends=('openconnect' 'sudo' 'procps-ng' 'gcc-libs' 'libxkbcommon' 'wayland' 'v
 makedepends=('cargo')
 options=('!debug')
 source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
-sha256sums=('0b30e0da73290e228ecca4421681fdc53825996919592ce9fbfbd8c8a9744eed')
+sha256sums=('fb13e5b513997e72db66acb5145ec745aeee70d15ee88fc53e01b8a1f6efd8b1')
 
 prepare() {
     cd "$pkgname-$pkgver"

@@ -1,6 +1,6 @@
 pkgbase = rust-openconnect-gui
 	pkgdesc = Minimal Rust/egui GUI for openconnect VPN: keyring password storage, unattended connects
-	pkgver = 0.1.2
+	pkgver = 0.1.3
 	pkgrel = 1
 	url = https://github.com/Coder-Mehedi/rust-openconnect-gui
 	arch = x86_64
@@ -15,7 +15,7 @@ pkgbase = rust-openconnect-gui
 	depends = vulkan-icd-loader
 	depends = hicolor-icon-theme
 	options = !debug
-	source = rust-openconnect-gui-0.1.2.tar.gz::https://github.com/Coder-Mehedi/rust-openconnect-gui/archive/refs/tags/v0.1.2.tar.gz
-	sha256sums = 0b30e0da73290e228ecca4421681fdc53825996919592ce9fbfbd8c8a9744eed
+	source = rust-openconnect-gui-0.1.3.tar.gz::https://github.com/Coder-Mehedi/rust-openconnect-gui/archive/refs/tags/v0.1.3.tar.gz
+	sha256sums = fb13e5b513997e72db66acb5145ec745aeee70d15ee88fc53e01b8a1f6efd8b1
 
 pkgname = rust-openconnect-gui
