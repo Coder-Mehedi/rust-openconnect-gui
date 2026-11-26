@@ -77,6 +77,22 @@ tar xzf rust-openconnect-gui-linux-amd64.tar.gz
 sudo install -Dm755 rust-openconnect-gui /usr/local/bin/rust-openconnect-gui
 ```
 
+That gives you the `rust-openconnect-gui` command (verify with
+`rust-openconnect-gui --check`). It will **not** show up in `pacman -Q` —
+it's a plain file, not a package — and it only appears in your app launcher
+if you also install the desktop entry and icon (included in the tarball
+since v0.1.2):
+
+```sh
+sudo install -Dm644 rust-openconnect-gui.desktop /usr/share/applications/rust-openconnect-gui.desktop
+sudo install -Dm644 rust-openconnect-gui.svg /usr/share/icons/hicolor/scalable/apps/rust-openconnect-gui.svg
+```
+
+On a fresh machine you also need the pieces the GUI drives:
+`sudo pacman -S openconnect`, a running Secret Service (gnome-keyring) for
+password saving, and the one-time sudoers rule from [Setup](#one-time-setup)
+below. `rust-openconnect-gui --check` reports which of these are missing.
+
 ### Arch Linux (AUR)
 
 Once published on the AUR:

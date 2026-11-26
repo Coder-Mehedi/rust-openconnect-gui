@@ -15,8 +15,14 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - run: cargo build --release --locked
-      - name: Package binary
-        run: tar czf rust-openconnect-gui-linux-amd64.tar.gz -C target/release rust-openconnect-gui
+      - name: Package release tarball
+        run: |
+          mkdir -p pkg
+          install -Dm755 target/release/rust-openconnect-gui pkg/rust-openconnect-gui
+          install -Dm644 assets/rust-openconnect-gui.desktop pkg/rust-openconnect-gui.desktop
+          install -Dm644 assets/rust-openconnect-gui.svg pkg/rust-openconnect-gui.svg
+          tar czf rust-openconnect-gui-linux-amd64.tar.gz \
+            -C pkg rust-openconnect-gui rust-openconnect-gui.desktop rust-openconnect-gui.svg
       - uses: softprops/action-gh-release@v2
         with:
           files: rust-openconnect-gui-linux-amd64.tar.gz

@@ -1,6 +1,6 @@
 # Maintainer: Mehedi Hasan <mehedi5051@gmail.com>
 pkgname=rust-openconnect-gui
-pkgver=0.1.1
+pkgver=0.1.2
 pkgrel=1
 pkgdesc="Minimal Rust/egui GUI for openconnect VPN: keyring password storage, unattended connects"
 arch=('x86_64')
